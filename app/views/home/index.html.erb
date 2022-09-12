@@ -1,0 +1,224 @@
+<div class="container">
+  <div class="d-flex flex-wrap justify-content-between py-4">
+    <h3>Jobs</h3>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
+      Add Job
+    </button>
+  </div>
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Job Title</th>
+        <th scope="col" width="150">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      
+    </tbody>
+  </table>
+</div>
+
+<div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="addForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addModalLabel">Add a Job</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group my-2">
+            <label class="form-label">Title</label>
+            <input class="form-control" name="title" />
+          </div>
+        
+          <div class="form-group my-2">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" name="description"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary">Add Job</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="editForm" data-id="">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editModalLabel">Edit a Job</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group my-2">
+            <label class="form-label">Title</label>
+            <input class="form-control" name="title" />
+          </div>
+        
+          <div class="form-group my-2">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" name="description"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary">Edit Job</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<script type="text/javascript">
+  $(document).ready(function() {
+  
+    loadTable();
+  
+  });
+</script>
+
+<script type="text/javascript">
+
+    function loadTable(){
+      var storage = localStorage.getItem('key') ? JSON.parse(localStorage.getItem('key')) : '';
+      var saveData = $.ajax({
+          type: 'GET',
+          url: "http://127.0.0.1:3000/api/v1/jobs",
+          dataType: "json",
+          headers: {
+              "authorization": storage,
+              "cache-control": "no-cache",
+          },
+          success: function(resultData, status, xhr) { 
+              let html = '';
+              $.each(resultData, function (key, value) {
+                  html += '<tr>\
+                            <th scope="row">'+value.id+'</th>\
+                            <td>'+value.title+'</td>\
+                            <td><a href="#" class="btn btn-danger delete-job me-2" data-id="'+value.id+'"><i class="fa-solid fa-trash-can"></i></a><button type="button" class="btn btn-secondary job-edit" data-bs-toggle="modal" data-bs-target="#editModal" data-id="'+value.id+'"><i class="fa-solid fa-pen-to-square"></i></button></td>\
+                          </tr>';
+              });
+              $('.table tbody').html(html);
+          }
+      });
+    }
+    $('#addForm').submit(function(e){
+        e.preventDefault();
+
+        function getFormData($form){
+            var unindexed_array = $form.serializeArray();
+            var indexed_array = {};
+
+            $.map(unindexed_array, function(n, i){
+                indexed_array[n['name']] = n['value'];
+            });
+
+            return indexed_array;
+        }
+
+        var job = getFormData($(this));
+        var data = {
+          job,
+        };
+
+        var storage = localStorage.getItem('key') ? JSON.parse(localStorage.getItem('key')) : '';
+        var saveData = $.ajax({
+            type: 'POST',
+            url: "http://127.0.0.1:3000/api/v1/jobs",
+            data: data,
+            dataType: "json",
+            headers: {
+                "authorization": storage,
+                "cache-control": "no-cache",
+            },
+            success: function(resultData, status, xhr) { 
+              loadTable();
+              $('#addModal').modal('hide');
+            }
+        });
+        saveData.error(function() { alert("Something went wrong"); });
+        
+    });
+
+    $(document).on('click', '.delete-job', function(e){
+      e.preventDefault();
+      let id = $(this).attr('data-id');
+      var storage = localStorage.getItem('key') ? JSON.parse(localStorage.getItem('key')) : '';
+      $.ajax({
+          type: 'DELETE',
+          url: "http://127.0.0.1:3000/api/v1/jobs/"+id+"",
+          headers: {
+              "authorization": storage,
+              "cache-control": "no-cache",
+          },
+          success: function(resultData, status, xhr) { 
+            loadTable();
+          }
+      });
+    })
+
+    $(document).on('click', '.job-edit', function(){
+      let id = $(this).attr('data-id');
+      var storage = localStorage.getItem('key') ? JSON.parse(localStorage.getItem('key')) : '';
+      $.ajax({
+          type: 'GET',
+          url: "http://127.0.0.1:3000/api/v1/jobs/"+id+"",
+          headers: {
+              "authorization": storage,
+              "cache-control": "no-cache",
+          },
+          success: function(resultData, status, xhr) { 
+            $('#editModal').find('form').attr('data-id', resultData.id);
+            $('#editModal').find('input[name="title"]').val(resultData.title);
+            $('#editModal').find('textarea[name="description"]').val(resultData.description);
+          }
+      });
+    })
+
+
+    $('#editForm').submit(function(e){
+        e.preventDefault();
+        let id = $(this).attr('data-id');
+        function getFormData($form){
+            var unindexed_array = $form.serializeArray();
+            var indexed_array = {};
+
+            $.map(unindexed_array, function(n, i){
+                indexed_array[n['name']] = n['value'];
+            });
+
+            return indexed_array;
+        }
+
+        var job = getFormData($(this));
+        var data = {
+          job,
+        };
+
+        var storage = localStorage.getItem('key') ? JSON.parse(localStorage.getItem('key')) : '';
+        var saveData = $.ajax({
+            type: 'PUT',
+            url: "http://127.0.0.1:3000/api/v1/jobs/"+id+"",
+            data: data,
+            dataType: "json",
+            headers: {
+                "authorization": storage,
+                "cache-control": "no-cache",
+            },
+            success: function(resultData, status, xhr) { 
+              loadTable();
+              $('#editModal').modal('hide');
+            }
+        });
+        saveData.error(function() { alert("Something went wrong"); });
+        
+    });
+</script>

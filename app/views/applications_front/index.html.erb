@@ -1,0 +1,111 @@
+<div class="container">
+  <div class="d-flex flex-wrap justify-content-between py-4">
+    <h3>Job Applications</h3>
+  </div>
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Job Title</th>
+        <th scope="col">Applicant</th>
+        <th scope="col" width="150">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      
+    </tbody>
+  </table>
+</div>
+
+
+<div class="modal fade" id="viewModal" tabindex="-1" aria-labelledby="viewModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="viewModalLabel">Viewing a Job</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          
+        </div>
+    </div>
+  </div>
+</div>
+
+
+<script type="text/javascript">
+  $(document).ready(function() {
+  
+    loadTable();
+  
+  });
+</script>
+
+<script type="text/javascript">
+
+    function loadTable(){
+      var storage = localStorage.getItem('key') ? JSON.parse(localStorage.getItem('key')) : '';
+      var saveData = $.ajax({
+          type: 'GET',
+          url: "http://127.0.0.1:3000/api/v1/job_application",
+          dataType: "json",
+          headers: {
+              "authorization": storage,
+              "cache-control": "no-cache",
+          },
+          success: function(resultData, status, xhr) { 
+              let html = '';
+              $.each(resultData, function (key, value) {
+                color = '';
+                if(value.seen){
+                    color = 'success';
+                }else{
+                    color = 'danger';
+                }
+                html += '<tr>\
+                        <th scope="row">'+value.id+'</th>\
+                        <td>'+value.jobtitle+'</td>\
+                        <td>'+value.username+'</td>\
+                        <td><button type="button" class="btn btn-'+color+' job-view" data-bs-toggle="modal" data-bs-target="#viewModal" data-id="'+value.id+'"><i class="fa-sharp fa-solid fa-eye"></i></button></td>\
+                        </tr>';
+              });
+              $('.table tbody').html(html);
+          }
+      });
+    }
+
+    $(document).on('click', '.job-view', function(){
+      let id = $(this).attr('data-id');
+      var storage = localStorage.getItem('key') ? JSON.parse(localStorage.getItem('key')) : '';
+      $.ajax({
+          type: 'GET',
+          url: "http://127.0.0.1:3000/api/v1/job_application/"+id+"",
+          headers: {
+              "authorization": storage,
+              "cache-control": "no-cache",
+          },
+          success: function(resultData, status, xhr) { 
+            let html = '<div class="row">\
+                    <div class="col-12 py-2"><b>Job Title: </b>'+resultData.jobtitle+'</div>\
+                    <div class="col-12 py-2"><b>Applicant: </b>'+resultData.username+'</div>\
+                    <div class="col-12 py-2"><b>Job Description: </b>'+resultData.jobdescription+'</div>\
+                </div>';
+            $('#viewModal').find('.modal-body').html(html);
+            data = {seen: true}
+            $.ajax({
+                type: 'PUT',
+                data: data,
+                url: "http://127.0.0.1:3000/api/v1/job_application/"+id+"",
+                headers: {
+                    "authorization": storage,
+                    "cache-control": "no-cache",
+                },
+                success: function(resultData, status, xhr) { 
+                    loadTable();
+                }
+            });
+          }
+      });
+    })
+
+</script>

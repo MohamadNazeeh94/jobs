@@ -1,0 +1,87 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns = "http://www.w3.org/1999/xhtml">
+
+   <head>
+      <meta http-equiv = "Content-Type" content = "text/html; charset = iso-8859-1" />
+      <meta http-equiv = "Content-Language" content = "en-us" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <%= csrf_meta_tag %>
+      <title>Ruby Jobs</title>
+      <%= stylesheet_link_tag "application" %>
+      <%= javascript_include_tag "application" %>
+   </head>
+
+   <body id = "library">
+      <div id = "container">
+         
+         <div id = "header">
+            <div class="container my-3">
+                <nav class="navbar navbar-expand-lg navbar-dark bg-primary px-3">
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+                        <div class="navbar-nav">
+                            <% if current_user.role == "admin" %>
+                                <% if current_page?(:controller => 'home', :action => 'index') %>
+                                    <%= link_to "Jobs", { :controller => :home, :action => :index }, { class: "nav-item nav-link active" } %>
+                                <% else %>
+                                    <%= link_to "Jobs", { :controller => :home, :action => :index }, { class: "nav-item nav-link" } %>
+                                <% end %>
+                            <% else %>
+                                <% if current_page?(:controller => 'seeker', :action => 'index') %>
+                                    <%= link_to "Jobs", { :controller => :seeker, :action => :index }, { class: "nav-item nav-link active" } %>
+                                <% else %>
+                                    <%= link_to "Jobs", { :controller => :seeker, :action => :index }, { class: "nav-item nav-link" } %>
+                                <% end %>
+                            <% end %>
+                            <% if current_user.role == "admin"  %>
+                                <% if current_page?(:controller => 'applications_front', :action => 'index') %>
+                                    <%= link_to "Job Applications", { :controller => :applications_front, :action => :index }, { class: "nav-item nav-link active" } %>
+                                <% else %>
+                                    <%= link_to "Job Applications", { :controller => :applications_front, :action => :index }, { class: "nav-item nav-link" } %>
+                                <% end %>
+                            <% end %>
+                        </div>
+                    </div>
+                    <div class="navbar-nav">
+                        <div class="text-white p-2 pe-0 d-none d-md-block"><span class="br-white pe-2"><%= current_user.email %></span></div>
+                        <a href="#" class="nav-link d-flex align-items-center" id="sign-out"><i class="fa fa-sign-out"></i></a>
+                    </div>
+                </nav>
+            </div>
+         </div>
+
+         <div id = "content">
+            <%= yield -%>
+         </div>
+         
+      </div>
+   </body>
+   
+</html>
+
+<script type="text/javascript">
+
+$(document).on('click', '#sign-out', function(e){
+    e.preventDefault();
+    var storage = localStorage.getItem('key') ? JSON.parse(localStorage.getItem('key')) : '';
+    var saveData = $.ajax({
+          type: 'DELETE',
+          url: "http://127.0.0.1:3000/users/sign_out",
+          headers: {
+              "Authorization": storage,
+              "cache-control": "no-cache",
+          },
+          beforeSend: function(xhr) {xhr.setRequestHeader('X-CSRF-Token', $('meta[name="csrf-token"]').attr('content'))},
+          success: function(resultData, status, xhr) { 
+                if (localStorage.length > 0 ) {
+                    localStorage.clear();
+                }
+                window.location.replace("http://127.0.0.1:3000/signin");
+            }
+      });
+})
+
+</script>

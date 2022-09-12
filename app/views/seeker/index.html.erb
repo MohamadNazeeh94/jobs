@@ -1,0 +1,104 @@
+<div class="container">
+  <div class="d-flex flex-wrap justify-content-between py-4">
+    <h3>Jobs</h3>
+  </div>
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Job Title</th>
+        <th scope="col" width="150">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      
+    </tbody>
+  </table>
+</div>
+
+
+# <div class="modal fade" id="applyModal" tabindex="-1" aria-labelledby="applyModalLabel" aria-hidden="true">
+#   <div class="modal-dialog">
+#     <div class="modal-content">
+#       <form id="editForm" data-id="">
+#         <div class="modal-header">
+#           <h5 class="modal-title" id="eapplyModalLabel">Edit a Job</h5>
+#           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+#         </div>
+#         <div class="modal-body">
+#           <div class="form-group my-2">
+#             <label class="form-label">Title</label>
+#             <input class="form-control" name="title" />
+#           </div>
+        
+#           <div class="form-group my-2">
+#             <label class="form-label">Description</label>
+#             <textarea class="form-control" name="description"></textarea>
+#           </div>
+#         </div>
+#         <div class="modal-footer">
+#           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+#           <button type="submit" class="btn btn-primary">Edit Job</button>
+#         </div>
+#       </form>
+#     </div>
+#   </div>
+# </div>
+
+
+<script type="text/javascript">
+  $(document).ready(function() {
+  
+    loadTable();
+  
+  });
+</script>
+
+<script type="text/javascript">
+
+    function loadTable(){
+      var storage = localStorage.getItem('key') ? JSON.parse(localStorage.getItem('key')) : '';
+      var saveData = $.ajax({
+          type: 'GET',
+          url: "http://127.0.0.1:3000/api/v1/jobs",
+          dataType: "json",
+          headers: {
+              "authorization": storage,
+              "cache-control": "no-cache",
+          },
+          success: function(resultData, status, xhr) { 
+              let html = '';
+              $.each(resultData, function (key, value) {
+                  html += '<tr>\
+                            <th scope="row">'+value.id+'</th>\
+                            <td>'+value.title+'</td>\
+                            <td><a href="#" class="btn btn-secondary job-apply me-2" data-id="'+value.id+'"><i class="fa-solid fa-paper-plane"></i></a></td>\
+                          </tr>';
+              });
+              $('.table tbody').html(html);
+          }
+      });
+    }
+
+    $(document).on('click', '.job-apply', function(e){
+        e.preventDefault();
+      var storage = localStorage.getItem('key') ? JSON.parse(localStorage.getItem('key')) : '';
+      let userId = <%= current_user.id %>;
+      let data = { "user_id": userId, "job_id": $(this).attr('data-id') }
+      saveData = $.ajax({
+          type: 'POST',
+          data,
+          url: "http://127.0.0.1:3000/api/v1/job_application",
+          headers: {
+              "authorization": storage,
+              "cache-control": "no-cache",
+          },
+          success: function(resultData, status, xhr) { 
+            if(resultData.status == "error"){
+                alert(resultData.message);
+            }
+          }
+      });
+    })
+
+</script>
